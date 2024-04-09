@@ -1,2 +1,4 @@
 from cryptography.fernet import Fernet
-from hashlib import md5
+import os
+import base64
+
