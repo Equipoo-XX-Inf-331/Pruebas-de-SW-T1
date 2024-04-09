@@ -5,6 +5,9 @@ from cryptography.fernet import Fernet
 import sqlite3
 from sqlite3 import Error
 import hashlib
+#busqueda de la bd
+import os
+import glob
 
 
 def generar_clave_SHA_256(contra):
@@ -27,64 +30,30 @@ def desencriptar_texto(texto_encriptado, clave):
     texto_desencriptado = cifrador.decrypt(texto_encriptado).decode()
     return texto_desencriptado
 
-# Contraseña para generar la clave
-contraseña = "mi_contraseña_secreta"
-
-# Generar la clave usando SHA-256 y codificar en base64
-clave = generar_clave_SHA_256(contraseña)
-print(clave)
-clave = generar_clave_base64(clave)
-print(clave)
-# Texto a encriptar
-texto_original = "Este es un texto de prueba para encriptar."
-
-# Encriptar el texto
-texto_encriptado = encriptar_texto(texto_original, clave)
-#print("Texto encriptado:", texto_encriptado)
-
-# Desencriptar el texto
-texto_desencriptado = desencriptar_texto(texto_encriptado, clave)
-#print("Texto desencriptado:", texto_desencriptado)
 
 
 
 
-def create_connection(db_file):
-    """Crear una conexión a la base de datos SQLite especificada por db_file"""
-    conn = None
-    try:
-        conn = sqlite3.connect(db_file)
-        return conn
-    except Error as e:
-        print(e)
-    return conn
 
-def create_table(conn, create_table_sql):
-    """Crear una tabla desde la sentencia create_table_sql"""
-    try:
-        c = conn.cursor()
-        c.execute(create_table_sql)
-    except Error as e:
-        print(e)
 
 
 #############------------------------CRUD USER------------------------#############
 
-def insert_user(conn, id_user, nombre, main_password):
+def insert_user(conn, id_user, nombre):
     """Insertar un nuevo usuario en la tabla usuario"""
     try:
         c = conn.cursor()
-        c.execute("INSERT INTO usuario (id_user, nombre, main_password) VALUES (?, ?, ?)", (id_user, nombre, main_password))
+        c.execute("INSERT INTO usuario (id_user, nombre) VALUES (?, ?)", (id_user, nombre))
         conn.commit()  # Guardar los cambios en la base de datos
         print("Usuario agregado correctamente.")
     except Error as e:
         print("Error al insertar usuario:", e)
 
 def get_user(conn, id_user):
-    """Obtener el nombre y contraseña de usuario basado en su ID"""
+    """Obtener el nombre  de usuario basado en su ID"""
     try:
         c = conn.cursor()
-        c.execute("SELECT nombre, main_password FROM usuario WHERE id_user = ?", (id_user,))
+        c.execute("SELECT nombre FROM usuario WHERE id_user = ?", (id_user,))
         row = c.fetchone()
         if row:
             return row
@@ -146,9 +115,29 @@ def delete_password(descripcion):
 #############----------------------------------------------------------#############
 
 
+def create_connection(database, password):
+    try:
+        conn = sqlite3.connect(database)
+        conn.execute("PRAGMA key='" + password + "'")
+        conn.execute("PRAGMA cipher=SQLCipher")
+        return conn
+    except sqlite3.Error as e:
+        print(e)
+        return None
+
+def create_table(conn, create_table_sql):
+    """Crear una tabla desde la sentencia create_table_sql"""
+    try:
+        c = conn.cursor()
+        c.execute(create_table_sql)
+    except Error as e:
+        print(e)
+
 
 def main():
     database = "./mypass.db"
+    password = "tu_contraseña_aqui"  # Cambia esto por tu contraseña
+
     sql_create_passwords_table = """CREATE TABLE IF NOT EXISTS passwords (
                                     descripcion TEXT PRIMARY KEY,
                                     password TEXT NOT NULL
@@ -156,12 +145,11 @@ def main():
     
     sql_create_usuario = """CREATE TABLE IF NOT EXISTS usuario (
                                 id_user int PRIMARY KEY,
-                                nombre TEXT NOT NULL,
-                                main_password TEXT NOT NULL
+                                nombre TEXT NOT NULL
                             );"""
 
     # Crear una conexión a la base de datos
-    conn = create_connection(database)
+    conn = create_connection(database, password)
 
     # Crear la tabla
     if conn is not None:
@@ -170,8 +158,37 @@ def main():
         return conn 
     else:
         print("Error! no se pudo crear la conexión a la base de datos.")
-        return None 
+        return None
 
+
+# Obtener la ruta del directorio donde se encuentra el archivo .py
+directorio_ejecutable = os.path.dirname(os.path.abspath(__file__))
+
+# Definir el nombre del archivo que deseas buscar
+nombre_archivo = "Mypass.db"
+
+# Crear un patrón de búsqueda que coincida con el nombre del archivo
+patron_busqueda = os.path.join(directorio_ejecutable, nombre_archivo)
+
+# Buscar archivos que coincidan con el patrón
+archivos_encontrados = glob.glob(patron_busqueda)
+
+# Verificar si se encontraron archivos
+if archivos_encontrados:
+    print("Se encontró el archivo en la siguiente ubicación:")
+    for archivo in archivos_encontrados:
+        print(archivo)
+else:
+    print("El archivo no se encontró en la carpeta del ejecutable.")
+
+
+
+
+
+
+
+
+'''
 if __name__ == '__main__':
     conn = main()
     #Programa como tal 
@@ -207,7 +224,7 @@ if __name__ == '__main__':
                     print("Contraseña registrada satisfactoriamente.")
 
             
-            insert_user(conn, 1, user, Hash_bd)
+            insert_user(conn, 1, user, main_contra)
         
         elif count_users(conn) == 1:
             user = get_user(conn, 1)
@@ -218,8 +235,6 @@ if __name__ == '__main__':
             while corte == False:
                 contra_bruto = input("Ingrese su contraseña porfavor: ")
                 Hash = generar_clave_SHA_256(contra_bruto)
-                print(Hash)
-                print(hash_bd)
                 if Hash == hash_bd:
                     print("Contraseña correcta.")
                     corte = True
@@ -232,3 +247,5 @@ if __name__ == '__main__':
             print("se tiene que borrar la base de datos debido a que no se puede asegurar la integridad de estos mismos")
     else:
         print("Error al establecer la conexión.")
+
+'''
