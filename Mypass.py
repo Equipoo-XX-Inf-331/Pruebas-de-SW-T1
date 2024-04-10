@@ -5,8 +5,28 @@ from cryptography.fernet import Fernet
 import sqlite3
 from sqlite3 import Error
 import hashlib
+#generador contraseñas
+import random
+import string
 
 
+
+######################------Creador contraseñas------######################
+
+def generador_pass(longitud,tipo ): #Se dara a eleccion si se puede incluir los caracteres de puntucion nomas
+    if tipo == "SI":
+        caracteres = string.ascii_letters + string.digits + string.punctuation
+    elif tipo == "NO":
+        caracteres = string.ascii_letters + string.digits
+
+    contra_random = ''.join(random.choice(caracteres) for _ in range(longitud))
+    return contra_random
+
+
+
+
+
+######################------Encriptacion------######################
 def generar_clave_SHA_256(contra):
     sha256 = hashlib.sha256()
     sha256.update(contra.encode())
@@ -27,27 +47,9 @@ def desencriptar_texto(texto_encriptado, clave):
     texto_desencriptado = cifrador.decrypt(texto_encriptado).decode()
     return texto_desencriptado
 
-# Contraseña para generar la clave
-contraseña = "mi_contraseña_secreta"
-
-# Generar la clave usando SHA-256 y codificar en base64
-clave = generar_clave_SHA_256(contraseña)
-print(clave)
-clave = generar_clave_base64(clave)
-print(clave)
-# Texto a encriptar
-texto_original = "Este es un texto de prueba para encriptar."
-
-# Encriptar el texto
-texto_encriptado = encriptar_texto(texto_original, clave)
-#print("Texto encriptado:", texto_encriptado)
-
-# Desencriptar el texto
-texto_desencriptado = desencriptar_texto(texto_encriptado, clave)
-#print("Texto desencriptado:", texto_desencriptado)
 
 
-
+######################------Base de datos------######################
 
 def create_connection(db_file):
     """Crear una conexión a la base de datos SQLite especificada por db_file"""
@@ -112,7 +114,7 @@ def count_users(conn):
 
 # Función para insertar una contraseña
 def insert_password(descripcion, password):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('mypass.db')
     cursor = conn.cursor()
     cursor.execute('INSERT INTO passwords (descripcion, password) VALUES (?, ?)', (descripcion, password))
     conn.commit()
@@ -120,16 +122,18 @@ def insert_password(descripcion, password):
 
 # Función para mostrar una contraseña
 def view_password(descripcion):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('mypass.db')
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM passwords WHERE descripcion = ?', (descripcion,))
     row = cursor.fetchone()
     conn.close()
-    return row
-
+    if row:
+        return row
+    else:
+        return False
 # Función para actualizar una contraseña existente
 def update_password(descripcion, new_password):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('mypass.db')
     cursor = conn.cursor()
     cursor.execute('UPDATE passwords SET password = ? WHERE descripcion = ?', (new_password, descripcion))
     conn.commit()
@@ -137,7 +141,7 @@ def update_password(descripcion, new_password):
 
 # Función para eliminar una contraseña existente
 def delete_password(descripcion):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('mypass.db')
     cursor = conn.cursor()
     cursor.execute('DELETE FROM passwords WHERE descripcion = ?', (descripcion,))
     conn.commit()
@@ -204,12 +208,12 @@ if __name__ == '__main__':
                 elif confirmacion == main_contra:
                     corte = True
                     Hash_bd = generar_clave_SHA_256(main_contra)
-                    print("Contraseña registrada satisfactoriamente.")
+                    print("Contraseña registrada satisfactoriamente.\n")
 
             
             insert_user(conn, 1, user, Hash_bd)
         
-        elif count_users(conn) == 1:
+        if count_users(conn) == 1:
             user = get_user(conn, 1)
             nombre = user[0]
             hash_bd = user[1]
@@ -218,16 +222,135 @@ if __name__ == '__main__':
             while corte == False:
                 contra_bruto = input("Ingrese su contraseña porfavor: ")
                 Hash = generar_clave_SHA_256(contra_bruto)
-                print(Hash)
-                print(hash_bd)
                 if Hash == hash_bd:
-                    print("Contraseña correcta.")
+                    print("Contraseña correcta.\n")
                     corte = True
                 else:
-                    print("Contraseña incorrecta, porfavor volver a intentar")
+                    print("Contraseña incorrecta, porfavor volver a intentar.\n")
+            
+            num_aux = (len(contra_bruto))//2
+            key_master_pre = contra_bruto[:num_aux] + Hash + contra_bruto[num_aux:]
+            key_master_256 = generar_clave_SHA_256(key_master_pre)
+            key_master = generar_clave_base64(key_master_256)
 
+            ciclo = True
+            while ciclo:
+                print("¿Que desea realizar?")
+                print("1. Ingresar una nueva contraseña")
+                print("2. Ver una contraseña")
+                print("3. Actualizar una contraseña")
+                print("4. Eliminar una contraseña")
+                print("5. Crear una contraseña")
+                print("6. Salir")
 
-        else:
+                opcion = input("Inserte el numero de la opción: ")
+                print("")
+
+                if opcion == "1":
+                    sitio = input("Ingrese el sitio o aplicacion correspondiente a la contraseña: ")
+                    sitio_lower = sitio.lower()
+                    if view_password(sitio_lower) == False:
+                        i = True
+                        while i == True:
+                            print("")
+                            contra_app = input("Ingrese la contraseña: ")
+                            aux_app = input("Ingrese la contraseña nuevamente: ")
+                            print("")
+
+                            if contra_app == aux_app:
+                                print("Contraseña registrada satisfactoriamente\n")
+                                i = False
+                                contra_app_encrip = encriptar_texto(contra_app, key_master)
+                                insert_password(sitio_lower, contra_app_encrip)
+
+                            else:
+                                print("Las contraseñas son diferentes,porfavor volver a intentar.\n")
+                    else:
+                        print("")
+                        print("Ya hay una contraseña registrada para "+ sitio + ".\n")
+
+                elif opcion == "2":
+                    sitio = input("Ingrese el sitio o aplicación a la que pertenece la contraseña: ")
+                    sitio_lower = sitio.lower()
+                    print("")
+                    if view_password(sitio_lower):
+                        contra_encriptada = view_password(sitio_lower)[1]
+                        contra_de_vuelta = desencriptar_texto(contra_encriptada, key_master)
+                        print("La contraseña para " + sitio +" es: " + contra_de_vuelta +"\n")
+                    else:
+                        print(sitio + " no se ha encontrado en la base de datos.\n")
+
+                elif opcion == "3":
+                    sitio = input("Ingrese el sitio o aplicación a la que pertenece la contraseña: ")
+                    sitio_lower = sitio.lower()
+                    print("")
+
+                    if view_password(sitio_lower):
+                        contra_encriptada = view_password(sitio_lower)[1]
+                        contra_de_vuelta = desencriptar_texto(contra_encriptada, key_master)
+                        print("La contraseña para " + sitio +" es: " + contra_de_vuelta +"\n")
+
+                        i = True
+                        while i == True:
+                            contra_app = input("Ingrese la nueva contraseña: ")
+                            aux_app = input("Ingrese la contraseña nuevamente: ")
+                            print("")
+                            if contra_app == aux_app:
+                                print("Contraseña registrada satisfactoriamente\n")
+                                i = False
+                                contra_app_encrip = encriptar_texto(contra_app, key_master)
+                                update_password(sitio_lower, contra_app_encrip)
+                            else:
+                                print("Las contraseñas son diferentes,porfavor volver a intentar.\n")
+                    else:
+                        print(sitio + " no se ha encontrado en la base de datos.\n")   
+
+                elif opcion == "4":
+                    sitio = input("Ingrese el sitio o aplicación a la que pertenece la contraseña: ")
+                    sitio_lower = sitio.lower()
+                    print("")
+                    if view_password(sitio_lower):
+                        i = True
+                        while i:
+                            confirmar = (input("¿Seguro que desea eliminar la contraseña de este sitio? (SI/NO): ")).upper()
+                            if confirmar == "SI":
+                                delete_password(sitio_lower)
+                                print("Contraseña eliminada correctamente.\n")
+                                i = False
+                            elif confirmar == "NO":
+                                print("No se borrara la contraseña.\n")
+                                i = False
+                            else:
+                                print("Entrada no valida, porfavor volver a confirmar o desconfirmar.\n")
+                    else:
+                        print(sitio + " no se ha encontrado en la base de datos.\n")
+
+                elif opcion == "5":
+                    i = True
+                    while i:
+                        largo = input("Defina el largo de la contraseña, el minimo es 8: ")
+                        print("")
+                        if largo.isdigit():
+                            largo = int(largo)
+                            if largo >= 8:
+                                print("¿Desea que su conotraseña posea signos de puntuación?, ejemplo: @;'...")
+                                tipo = (input("(SI/NO): ")).upper()
+                                contra_nueva = generador_pass(largo, tipo)
+                                print("La contraseña generada es: "+ str(contra_nueva))
+                                print("")
+                                i = False
+                            else:
+                                print("Largo muy corto.\n")
+                        else: 
+                            print("No se ingreso un numero.\n")
+
+                elif opcion == "6":
+                    ciclo = False
+
+                else:
+                    print("Opción no valida, inserte de nuevo la opción a escojer de nuevo porfavor.\n")
+
+        if count_users(conn) > 1:
             print("Este programa tiene bloqueada la posibilidad de tener mas de un usuario y actualmente se encuentra en esa situación,") 
             print("se tiene que borrar la base de datos debido a que no se puede asegurar la integridad de estos mismos")
     else:

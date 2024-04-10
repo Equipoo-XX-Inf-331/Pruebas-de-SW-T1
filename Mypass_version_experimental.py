@@ -136,7 +136,7 @@ def create_table(conn, create_table_sql):
 
 def main():
     database = "./mypass.db"
-    password = "tu_contraseña_aqui"  # Cambia esto por tu contraseña
+    password = "contra"  # Cambia esto por tu contraseña
 
     sql_create_passwords_table = """CREATE TABLE IF NOT EXISTS passwords (
                                     descripcion TEXT PRIMARY KEY,
@@ -179,7 +179,7 @@ if archivos_encontrados:
     for archivo in archivos_encontrados:
         print(archivo)
 else:
-    print("El archivo no se encontró en la carpeta del ejecutable.")
+    bd_creada =True
 
 
 
