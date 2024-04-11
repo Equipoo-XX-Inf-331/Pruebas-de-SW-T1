@@ -1,3 +1,4 @@
+#encriptacion
 import hashlib
 import base64
 from cryptography.fernet import Fernet
@@ -176,6 +177,11 @@ def main():
         print("Error! no se pudo crear la conexión a la base de datos.")
         return None 
 
+
+
+
+
+
 if __name__ == '__main__':
     conn = main()
     #Programa como tal 
@@ -183,6 +189,10 @@ if __name__ == '__main__':
     if conn is not None:
         print("Conexión establecida.")
 
+
+        #Saber si hay un usuario registrado 
+
+        #No hay un usuario
         if count_users(conn) == 0:
             print("Bienvenido a Mypass")
             user = input("No hay un usuario registrado, porfavor ingrese el nombre de usuario que le gustario ocupar: ")
@@ -212,7 +222,9 @@ if __name__ == '__main__':
 
             
             insert_user(conn, 1, user, Hash_bd)
-        
+
+
+        #Si hay un usuario
         if count_users(conn) == 1:
             user = get_user(conn, 1)
             nombre = user[0]
@@ -269,6 +281,8 @@ if __name__ == '__main__':
                         print("")
                         print("Ya hay una contraseña registrada para "+ sitio + ".\n")
 
+
+
                 elif opcion == "2":
                     sitio = input("Ingrese el sitio o aplicación a la que pertenece la contraseña: ")
                     sitio_lower = sitio.lower()
@@ -279,6 +293,8 @@ if __name__ == '__main__':
                         print("La contraseña para " + sitio +" es: " + contra_de_vuelta +"\n")
                     else:
                         print(sitio + " no se ha encontrado en la base de datos.\n")
+
+
 
                 elif opcion == "3":
                     sitio = input("Ingrese el sitio o aplicación a la que pertenece la contraseña: ")
@@ -305,6 +321,8 @@ if __name__ == '__main__':
                     else:
                         print(sitio + " no se ha encontrado en la base de datos.\n")   
 
+
+
                 elif opcion == "4":
                     sitio = input("Ingrese el sitio o aplicación a la que pertenece la contraseña: ")
                     sitio_lower = sitio.lower()
@@ -325,6 +343,8 @@ if __name__ == '__main__':
                     else:
                         print(sitio + " no se ha encontrado en la base de datos.\n")
 
+
+
                 elif opcion == "5":
                     i = True
                     while i:
@@ -343,6 +363,8 @@ if __name__ == '__main__':
                                 print("Largo muy corto.\n")
                         else: 
                             print("No se ingreso un numero.\n")
+
+
 
                 elif opcion == "6":
                     ciclo = False
