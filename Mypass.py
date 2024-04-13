@@ -250,12 +250,12 @@ if __name__ == '__main__':
             ciclo = True
             while ciclo:
                 print("¿Que desea realizar?")
-                print("1. Ingresar una nueva contraseña")
-                print("2. Ver una contraseña")
-                print("3. Actualizar una contraseña")
-                print("4. Eliminar una contraseña")
-                print("5. Crear una contraseña")
-                print("6. Salir")
+                print("1. Ingresar una nueva contraseña.")
+                print("2. Ver una contraseña.")
+                print("3. Actualizar una contraseña.")
+                print("4. Eliminar una contraseña.")
+                print("5. Crear una contraseña.")
+                print("6. Salir.")
 
                 opcion = input("Inserte el numero de la opción: ")
                 print("")
@@ -272,7 +272,7 @@ if __name__ == '__main__':
                             print("")
 
                             if contra_app == aux_app:
-                                logging.info("Contraseña registrada satisfactoriamente\n")
+                                logging.info("Contraseña registrada satisfactoriamente.\n")
                                 i = False
                                 contra_app_encrip = encriptar_texto(contra_app, key_master)
                                 insert_password(sitio_lower, contra_app_encrip)
@@ -316,7 +316,7 @@ if __name__ == '__main__':
                             aux_app = input("Ingrese la contraseña nuevamente: ")
                             print("")
                             if contra_app == aux_app:
-                                logging.info("Contraseña registrada satisfactoriamente\n")
+                                logging.info("Contraseña registrada satisfactoriamente.\n")
                                 i = False
                                 contra_app_encrip = encriptar_texto(contra_app, key_master)
                                 update_password(sitio_lower, contra_app_encrip)
